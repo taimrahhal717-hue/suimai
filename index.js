@@ -19,118 +19,119 @@ app.get('/', (req, res) => {
         <title>SUIMAI</title>
         <style>
             :root { --bg: #FDFCF9; --text: #3E4E3C; --accent: #A4B4A5; --border: #EAE5D8; }
-            body { background: var(--bg); color: var(--text); font-family: 'Times New Roman', serif; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-            header { padding: 15px 20px; display: flex; align-items: center; border-bottom: 1px solid var(--border); background: #FFF; justify-content: space-between;}
-            .logo { font-size: 20px; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+            body { background: var(--bg); color: var(--text); font-family: serif; margin: 0; display: flex; overflow: hidden; height: 100vh; }
             
-            #chat-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 700px; margin: 0 auto; }
-            .start-screen { text-align: center; margin: auto; }
-            .start-icon { font-size: 50px; color: #C2CFC2; margin-bottom: 15px; }
-            .start-title { font-size: 26px; margin-bottom: 8px; font-weight: 400; }
-            .start-sub { font-size: 15px; color: #8A9A8B; }
+            /* القائمة الجانبية - الثلاث خطوط */
+            #sidebar { width: 250px; background: #FFF; border-left: 1px solid var(--border); display: none; flex-direction: column; padding: 20px; transition: 0.3s; z-index: 100; }
+            #sidebar.active { display: flex; }
+            .history-item { padding: 10px; border-bottom: 1px solid var(--border); cursor: pointer; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-            .message { padding: 14px 18px; border-radius: 18px; max-width: 85%; line-height: 1.6; font-family: sans-serif; position: relative; }
+            .main-content { flex: 1; display: flex; flex-direction: column; position: relative; }
+            header { padding: 15px 20px; display: flex; align-items: center; border-bottom: 1px solid var(--border); background: #FFF; gap: 15px; }
+            .menu-btn { cursor: pointer; font-size: 24px; }
+
+            #chat-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+            .message { padding: 14px 18px; border-radius: 18px; max-width: 85%; font-family: sans-serif; }
             .user { background: var(--border); align-self: flex-start; border-radius: 18px 18px 18px 0; }
             .ai { background: #FFF; align-self: flex-end; border: 1px solid var(--border); border-radius: 18px 18px 0 18px; }
-            .message img { max-width: 100%; border-radius: 10px; margin-top: 8px; display: block; }
-
-            .input-box { padding: 20px; width: 100%; max-width: 700px; margin: 0 auto; box-sizing: border-box; }
-            .input-wrapper { background: #FFF; border: 1px solid var(--border); border-radius: 15px; display: flex; align-items: center; padding: 10px 15px; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
-            input { flex: 1; border: none; outline: none; font-size: 16px; color: var(--text); background: transparent; }
-            .btns { display: flex; gap: 12px; color: #8A9A8B; cursor: pointer; font-size: 20px; }
-            #preview-area { display: none; padding: 10px; position: relative; text-align: center;}
-            #preview-img { max-height: 80px; border-radius: 8px; border: 1px solid var(--border); }
+            
+            .input-box { padding: 20px; background: var(--bg); }
+            .input-wrapper { background: #FFF; border: 1px solid var(--border); border-radius: 15px; display: flex; padding: 10px 15px; gap: 10px; align-items: center; }
+            input { flex: 1; border: none; outline: none; font-size: 16px; background: transparent; }
+            #preview { display:none; padding:10px; text-align:center; }
+            #preview img { max-height: 60px; border-radius: 5px; }
         </style>
     </head>
     <body>
-        <header>
-            <div class="logo"><span>☰</span> ✒ SUIMAI</div>
-            <div id="user-info" style="font-size: 13px; color: #A4B4A5;">مساحة خاصة</div>
-        </header>
-
-        <div id="chat-container">
-            <div class="start-screen" id="start-screen">
-                <div class="start-icon">✧</div>
-                <div class="start-title">ابدأ مدخلة جديدة</div>
-                <div class="start-sub">خذ نفساً. اجمع أفكارك. الحبر بانتظارك.</div>
-            </div>
+        <div id="sidebar">
+            <h3 style="font-weight:normal;">المحادثات السابقة</h3>
+            <div id="history-list"></div>
+            <button onclick="localStorage.clear(); location.reload();" style="margin-top:auto; border:none; background:#eee; padding:10px; cursor:pointer;">مسح الكل</button>
         </div>
 
-        <div id="preview-area">
-            <img id="preview-img">
-            <button onclick="cancelImg()" style="background:none; border:none; color:red; cursor:pointer;">حذف</button>
-        </div>
+        <div class="main-content">
+            <header>
+                <div class="menu-btn" onclick="document.getElementById('sidebar').classList.toggle('active')">☰</div>
+                <div style="font-weight:bold;">✒ SUIMAI</div>
+            </header>
 
-        <div class="input-box">
-            <div class="input-wrapper">
-                <input type="text" id="userInput" placeholder="اكتب أفكارك..." onkeypress="if(event.key === 'Enter') send()">
-                <div class="btns">
-                    <span onclick="document.getElementById('fileInput').click()">📷</span>
-                    <span onclick="send()">➤</span>
+            <div id="chat-container">
+                <div id="start-msg" style="text-align:center; margin:auto;">
+                    <div style="font-size:50px; color:#C2CFC2;">✧</div>
+                    <h2 style="font-weight:normal;">ابدأ مدخلة جديدة</h2>
                 </div>
             </div>
-            <input type="file" id="fileInput" hidden accept="image/*" onchange="handleFile(this)">
+
+            <div id="preview"><img id="p-img"></div>
+
+            <div class="input-box">
+                <div class="input-wrapper">
+                    <input type="text" id="userInput" placeholder="اكتب أفكارك..." onkeypress="if(event.key==='Enter')send()">
+                    <span onclick="document.getElementById('file').click()" style="cursor:pointer;">📷</span>
+                    <span onclick="send()" style="cursor:pointer; color:var(--accent);">➤</span>
+                </div>
+                <input type="file" id="file" hidden accept="image/*" onchange="preview(this)">
+            </div>
         </div>
 
         <script>
-            let base64File = null;
+            let imgData = null;
             const chat = document.getElementById('chat-container');
-            const startScreen = document.getElementById('start-screen');
+            const historyList = document.getElementById('history-list');
 
-            // تحميل المحادثة الخاصة بهذا الجهاز فقط
             window.onload = () => {
-                const history = localStorage.getItem('suimai_private_chat');
-                if(history) {
-                    startScreen.style.display = 'none';
-                    chat.innerHTML = history;
-                    chat.scrollTop = chat.scrollHeight;
+                const h = localStorage.getItem('suimai_v2');
+                if(h) { 
+                    document.getElementById('start-msg').style.display='none'; 
+                    chat.innerHTML = h; 
+                    updateSidebar();
                 }
             };
 
-            function handleFile(input) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    base64File = e.target.result;
-                    document.getElementById('preview-img').src = base64File;
-                    document.getElementById('preview-area').style.display = 'block';
-                };
-                reader.readAsDataURL(input.files[0]);
+            function preview(input) {
+                const r = new FileReader();
+                r.onload = (e) => { imgData = e.target.result; document.getElementById('p-img').src=imgData; document.getElementById('preview').style.display='block'; };
+                r.readAsDataURL(input.files[0]);
             }
 
-            function cancelImg() { base64File = null; document.getElementById('preview-area').style.display = 'none'; }
-
             async function send() {
-                const input = document.getElementById('userInput');
-                const text = input.value.trim();
-                if(!text && !base64File) return;
+                const inp = document.getElementById('userInput');
+                const txt = inp.value.trim();
+                if(!txt && !imgData) return;
+                document.getElementById('start-msg').style.display='none';
 
-                startScreen.style.display = 'none';
+                let userH = '<div class="message user">' + txt + (imgData ? '<br><img src="'+imgData+'" style="max-width:100%">' : '') + '</div>';
+                chat.innerHTML += userH;
                 
-                let userHtml = '<div class="message user">' + text;
-                if(base64File) userHtml += '<img src="'+base64File+'">';
-                userHtml += '</div>';
-                
-                chat.innerHTML += userHtml;
-                const tempImg = base64File;
-                input.value = '';
-                cancelImg();
+                const bTxt = txt; const bImg = imgData;
+                inp.value = ''; imgData = null; document.getElementById('preview').style.display='none';
                 chat.scrollTop = chat.scrollHeight;
 
                 try {
-                    const res = await fetch('/chat', {
+                    const r = await fetch('/chat', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ message: text, image: tempImg })
+                        body: JSON.stringify({ message: bTxt, image: bImg })
                     });
-                    const data = await res.json();
-                    chat.innerHTML += '<div class="message ai">' + data.reply + '</div>';
-                    chat.scrollTop = chat.scrollHeight;
-                    
-                    // حفظ المحادثة في ذاكرة هذا الجهاز فقط
-                    localStorage.setItem('suimai_private_chat', chat.innerHTML);
-                } catch (e) {
-                    chat.innerHTML += '<div class="message ai">عذراً، حدث خطأ.</div>';
+                    const d = await r.json();
+                    chat.innerHTML += '<div class="message ai">' + d.reply + '</div>';
+                } catch(e) {
+                    chat.innerHTML += '<div class="message ai">فشل في الطلب، تأكد من اتصالك.</div>';
                 }
+                chat.scrollTop = chat.scrollHeight;
+                localStorage.setItem('suimai_v2', chat.innerHTML);
+                updateSidebar();
+            }
+
+            function updateSidebar() {
+                historyList.innerHTML = '';
+                const msgs = chat.querySelectorAll('.user');
+                msgs.forEach((m, i) => {
+                    const item = document.createElement('div');
+                    item.className = 'history-item';
+                    item.innerText = m.innerText.substring(0, 20) + '...';
+                    historyList.appendChild(item);
+                });
             }
         </script>
     </body>
@@ -139,19 +140,18 @@ app.get('/', (req, res) => {
 });
 
 app.post('/chat', async (req, res) => {
-  try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const { message, image } = req.body;
-    let parts = [{ text: "أنت SUIMAI، مساعد ذكي وراقي جداً. أجب بالعربية بأسلوب أدبي بسيط.\n\nالمستخدم: " + message }];
-
-    if (image && image.includes(',')) {
-      parts.unshift({ inlineData: { data: image.split(',')[1], mimeType: "image/jpeg" } });
+    try {
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const { message, image } = req.body;
+        let parts = [{ text: "أنت SUIMAI، مساعد راقٍ جداً. أجب بذكاء واختصار.\n\nالمستخدم: " + message }];
+        if (image && image.includes(',')) parts.unshift({ inlineData: { data: image.split(',')[1], mimeType: "image/jpeg" } });
+        
+        const result = await model.generateContent({ contents: [{ role: "user", parts }] });
+        res.json({ reply: (await result.response).text() });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ reply: "حدث خطأ داخلي في السيرفر." });
     }
-
-    const result = await model.generateContent({ contents: [{ role: "user", parts }] });
-    res.json({ reply: (await result.response).text() });
-  } catch (e) { res.status(500).json({ reply: "فشل في معالجة الطلب." }); }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log('SUIMAI Live!'));
+app.listen(process.env.PORT || 3000);
